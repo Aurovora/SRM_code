@@ -30,16 +30,19 @@ $$
 
 $$
 \mathbf{R}_y(\phi) = \begin{pmatrix} 
-                    \cos\phi & 0 & \sin\phi \\
-                    0 & 1 & 0 \\ 
-                    -\sin\phi & 0 & \cos\phi 
-                    \end{pmatrix}
+\cos\phi & 0 & \sin\phi \\
+0 & 1 & 0 \\ 
+-\sin\phi & 0 & \cos\phi 
+\end{pmatrix}
 $$
 
 绕 $Z$ 轴旋转矩阵 $\mathbf{R}_z$ (Roll)：
 
 $$
-\mathbf{R}_z(\psi) = \begin{pmatrix} \cos\psi & -\sin\psi & 0 \\ \sin\psi & \cos\psi & 0 \\ 0 & 0 & 1 \end{pmatrix}
+\mathbf{R}_z(\psi) = \begin{pmatrix} 
+\cos\psi & -\sin\psi & 0 \\
+\sin\psi & \cos\psi & 0 \\
+0 & 0 & 1 \end{pmatrix}
 $$
 
 最终旋转矩阵R是这三个基本旋转矩阵的乘积(乘法顺序是rm_y * rm_x * rm_z)
@@ -68,23 +71,11 @@ RMat EAngleToRMat(EAngle REF_IN ea) {
 
 + **CTVecToSTVec**: 直角坐标转换到球坐标
 
-$x$ (右移)：$r\cdot\cos(E)\cdot\sin(A)$
+$x$=$\text{距离} \times \cos(\text{仰角}) \times \sin(\text{偏角})$
 
-$$
-\text{距离} \times \cos(\text{仰角}) \times \sin(\text{偏角})
-$$
+$y$=$\text{距离} \times (-\sin(\text{仰角}))$
 
-$y$ (下移)：$-r\cdot\sin(E)$
-
-$$
-\text{距离} \times (-\sin(\text{仰角}))
-$$
-
-$z$ (前移)：$r\cdot\cos(E)\cdot\cos(A)$
-
-$$
-\text{距离} \times \cos(\text{仰角}) \times \cos(\text{偏角})
-$$
+$z$=$\text{距离} \times \cos(\text{仰角}) \times \cos(\text{偏角})$
 
 #### 代码：
 ```cpp
