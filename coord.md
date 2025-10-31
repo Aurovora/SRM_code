@@ -131,7 +131,7 @@ RVec RMatToRVec(RMat REF_IN rm) {
     * 枪口坐标系：原点为子弹获得初速的位置，自身可旋转，与世界坐标系原点位置关系固定
 + **CamToWorld**：将相机坐标系坐标转换为世界坐标系坐标。（需借助IMU坐标）
 
-$$\text(相机坐标ctv_cam)\xrightarrow\text(转换到IMU坐标系)\xrightarrow\text(添加IMU固定平移偏移ctv_iw_)\xrightarrow\text(乘上实时IMU姿态rm_imu)\xrightarrow\text(世界坐标)$$
+$$相机坐标ctv_cam\xrightarrow转换到IMU坐标系\xrightarrow添加IMU固定平移偏移ctv_iw_\xrightarrow乘上实时IMU姿态rm_imu\xrightarrow世界坐标$$
 
 + **WorldToCam**：将世界坐标系坐标转换为相机坐标系坐标
 
@@ -191,46 +191,3 @@ cv::Point2f Solver::CamToPic(CTVec REF_IN ctv_cam) const {
   return {static_cast<float>(result.x()), static_cast<float>(result.y())};
 }
 ```
-此模块的代码中使用了多个现代 C++ 特性，它们提高了代码的清晰度、安全性和效率。
-
-1. 命名空间 (namespace)
-代码使用了嵌套命名空间 namespace srm::coord { ... } (C++17 简化写法)，这有助于组织代码，避免全局命名冲突，并清晰地标识模块归属。
-
-2. 属性标记 ([[nodiscard]]) - C++17
-在所有转换函数（如 RMatToEAngle、CamToWorld）和 Initialize() 方法前都使用了 [[nodiscard]] 属性。
-
-含义： 标记函数的返回值不应被忽略。
-
-好处： 增强代码安全性。如果调用者没有使用函数的返回值（例如没有检查 Initialize() 的返回值），编译器会发出警告，提醒开发者可能遗漏了重要的状态信息或计算结果。
-
-3. 类型别名 (using) - C++11
-模块使用 using 关键字为复杂的 Eigen 类型创建了别名，例如：
-
-C++
-
-using RVec = Eigen::Vector3d;
-using RMat = Eigen::Matrix3d;
-// ...
-好处： 提高了代码的可读性，使代码更具领域特定性（一眼看出 RMat 是旋转矩阵，而不是普通的 Eigen::Matrix3d），且比传统的 typedef 更灵活。
-
-4. constexpr (隐含应用，与库相关) - C++11/14
-虽然代码中没有直接使用 constexpr，但代码高度依赖 Eigen 库。现代 C++ 库（如 Eigen 和 STL）通常会在容器、数学函数等处使用 constexpr 来允许在编译期进行计算，这对于性能敏感的坐标转换非常重要，可以减少运行时开销。
-
-5. 增强的枚举（未显式使用，但常用于类似场景） - C++11
-在定义坐标系类型时，如果使用 enum class（作用域内枚举）而不是传统的 enum，可以进一步避免命名空间污染和类型转换问题，是现代 C++ 的最佳实践。虽然此模块主要使用类型别名，但这是相关领域的常见特性。
-
-6. 统一初始化 ({}) - C++11
-在 Solver::Initialize() 中，从配置读取 std::vector<double> 后，使用 {} 语法将数据安全地初始化到 Eigen 向量中，例如：
-
-C++
-
-// ctv_iw_ 是 Eigen::Vector3d
-ctv_iw_ << ctv_iw_std[0], ctv_iw_std[1], ctv_iw_std[2]; // 使用 Eigen 的逗号初始化（stream-like）
-
-// 如果是直接使用列表，统一初始化更好
-// CTVec ctv_example{1.0, 2.0, 3.0};
-代码主要使用了 Eigen 的流式初始化，但在现代 C++ 中，{} 统一初始化是推荐用于防止隐式类型转换和保证零初始化的方式。
-
-cpp特性：
-引用&：传递的只是原始对象所在内存地址的一个别名（在用法上是值，在本质上是地址的常量封装。修改引用也会修改变量），实现比指针更安全、更简洁的传址调用，避免昂贵的对象拷贝
-常量引用const&：保证数据的安全性和不变性
