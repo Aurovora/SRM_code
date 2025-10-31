@@ -2,31 +2,34 @@
 ## 模块概述
 coord模块主要用于坐标系之间的转换和管理。它定义了多种常用的坐标表示方式（旋转矩阵、欧拉角、直角坐标、球坐标、齐次变换矩阵）及其相互转换的函数，并提供了一个Solver类来管理和执行在机器人或视觉系统中常见的几个关键坐标系（世界、IMU/陀螺仪、相机、枪口）之间的转换。
 
-**base：**实现单个坐标表示形式之间的基础数学转换
+**base**: 实现单个坐标表示形式之间的基础数学转换
 
-**solver：**利用`base`提供的基础转换，结合系统配置参数，来管理和计算不同物理坐标系之间的复杂变换。
-
+**solver**: 利用`base`提供的基础转换，结合系统配置参数，来管理和计算不同物理坐标系之间的复杂变换。
+- - -
 ## base
 
 ### 欧拉角 $\leftrightarrow$ 旋转矩阵
 
 #### 功能：
 
-+ **EAngleToRMat：**将一个3×3的矩阵rm转换为特定的欧拉角(yaw,pitch,row)序列。
++ **EAngleToRMat**： 将一个3×3的矩阵rm转换为特定的欧拉角(yaw,pitch,row)序列。
 
-+ **RMatToEAngle：**将一个欧拉角ea(ea[0],ea[1],ea[2])(yaw,pitch,row)转换为3×3的矩阵
++ **EAngleToRMat**： 将一个欧拉角ea(ea[0],ea[1],ea[2])(yaw,pitch,row)转换为3×3的矩阵
 
 绕X轴旋转矩阵 $\mathbf{R}_x$ (Pitch)：
+
 $$
 \mathbf{R}_x(\theta) = \begin{pmatrix} 1 & 0 & 0 \\ 0 & \cos\theta & -\sin\theta \\ 0 & \sin\theta & \cos\theta \end{pmatrix}
 $$
 
 绕 $Y$ 轴旋转矩阵 $\mathbf{R}_y$ (Yaw)：
+
 $$
 \mathbf{R}_y(\phi) = \begin{pmatrix} \cos\phi & 0 & \sin\phi \\ 0 & 1 & 0 \\ -\sin\phi & 0 & \cos\phi \end{pmatrix}
 $$
 
 绕 $Z$ 轴旋转矩阵 $\mathbf{R}_z$ (Roll)：
+
 $$
 \mathbf{R}_z(\psi) = \begin{pmatrix} \cos\psi & -\sin\psi & 0 \\ \sin\psi & \cos\psi & 0 \\ 0 & 0 & 1 \end{pmatrix}
 $$
@@ -53,21 +56,24 @@ RMat EAngleToRMat(EAngle REF_IN ea) {
 
 ### 直角坐标 $\leftrightarrow$ 球坐标
 #### 功能：
-+ **STVecToCTVec:**球坐标(phi, theta, r)右偏角，上仰角，转换到直角坐标(x,y,z)
++ **STVecToCTVec**:球坐标(phi, theta, r)右偏角，上仰角，转换到直角坐标(x,y,z)
 
-+ **CTVecToSTVec：**直角坐标转换到球坐标
++ **CTVecToSTVec**:直角坐标转换到球坐标
 
 $x$ (右移)：$r \cdot \cos(E) \cdot \sin(A)$
+
 $$
 \text{距离} \times \cos(\text{仰角}) \times \sin(\text{偏角})
 $$
 
 $y$ (下移)：$-r \cdot \sin(E)$
+
 $$
 \text{距离} \times (-\sin(\text{仰角}))
 $$
 
 $z$ (前移)：$r \cdot \cos(E) \cdot \cos(A)$
+
 $$
 \text{距离} \times \cos(\text{仰角}) \times \cos(\text{偏角})
 $$
