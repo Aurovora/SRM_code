@@ -181,8 +181,8 @@ CTVec Solver::WorldToMuzzle(CTVec REF_IN ctv_world, RMat REF_IN rm_imu) const {
 }
 ```
 
-### 相机坐标系下的三维点到二维图像像素坐标的投影
-## 功能
+### 三维点 $\rightarrow$ 二维图像像素坐标
+#### 功能
 + **CamToPic**: 将相机坐标系下的三维点ctv_cam投影到二维图像平面上的像素坐标cv::Point2f
 
 ```cpp
