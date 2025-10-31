@@ -131,7 +131,7 @@ RVec RMatToRVec(RMat REF_IN rm) {
     * 枪口坐标系：原点为子弹获得初速的位置，自身可旋转，与世界坐标系原点位置关系固定
 + **CamToWorld**：将相机坐标系坐标转换为世界坐标系坐标。（需借助IMU坐标）
 
-$$相机坐标ctv_cam\xrightarrow转换到IMU坐标系\xrightarrow添加IMU固定平移偏移ctv_iw_\xrightarrow乘上实时IMU姿态rm_imu\xrightarrow世界坐标$$
+$$相机坐标ctv_cam\rightarrow转换到IMU坐标系\rightarrow添加IMU固定平移偏移ctv_iw_\rightarrow乘上实时IMU姿态rm_imu\rightarrow世界坐标$$
 
 + **WorldToCam**：将世界坐标系坐标转换为相机坐标系坐标
 
