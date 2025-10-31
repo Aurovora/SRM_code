@@ -1,6 +1,6 @@
 # **coord模块**
 ## 模块概述
-coord模块主要用于坐标系之间的转换和管理。它定义了多种常用的坐标表示方式（旋转矩阵、欧拉角、直角坐标、球坐标、齐次变换矩阵）及其相互转换的函数，并提供了一个Solver类来管理和执行在机器人或视觉系统中常见的几个关键坐标系（世界、IMU/陀螺仪、相机、枪口）之间的转换。
+`coord`模块主要用于坐标系之间的转换和管理。它定义了多种常用的坐标表示方式（旋转矩阵、欧拉角、直角坐标、球坐标、齐次变换矩阵）及其相互转换的函数，并提供了一个`Solver`类来管理和执行在机器人或视觉系统中常见的几个关键坐标系（世界、IMU/陀螺仪、相机、枪口）之间的转换。
 
 **base**: 实现单个坐标表示形式之间的基础数学转换
 
@@ -117,11 +117,80 @@ RVec RMatToRVec(RMat REF_IN rm) {
 }
 ```
 - - -
-2.solver
+## solver
 
+### 初始化与配置
+#### 功能：
++ **Initialize**： 从config配置中读取所有坐标系（IMU、相机、枪口）相对于世界系或IMU的固定位姿（平移ctv和旋转ea），并将角度转换为弧度、平移量转换为米。(IMU是一种传感器模块，用于测量物体在空间中的姿态、角速度和加速度。)
 
+### Camera $\leftrightarrow$ World
+#### 功能(涵盖了相机坐标、IMU系、世界系的互转)
+    * 世界坐标系：原点为陀螺仪中心，自身无旋转，方向为陀螺仪置零的方向
+    * 陀螺仪IMU坐标系：原点为陀螺仪中心，自身可旋转
+    * 相机坐标系：原点为相机光心，自身可旋转，与世界坐标系原点位置关系固定
+    * 枪口坐标系：原点为子弹获得初速的位置，自身可旋转，与世界坐标系原点位置关系固定
++ **CamToWorld**：将相机坐标系坐标转换为世界坐标系坐标。（需借助IMU坐标）
 
+$$\text(相机坐标ctv_cam)\xrightarrow\text(转换到IMU坐标系)\xrightarrow\text(添加IMU固定平移偏移ctv_iw_)\xrightarrow\text(乘上实时IMU姿态rm_imu)\xrightarrow\text(世界坐标)$$
 
++ **WorldToCam**：将世界坐标系坐标转换为相机坐标系坐标
+
+```cpp
+CTVec Solver::CamToWorld(CTVec REF_IN ctv_cam, RMat REF_IN rm_imu) const {
+  HCTVec hctv_cam;
+  CTVec ctv_imu;
+  hctv_cam << ctv_cam[0], ctv_cam[1], ctv_cam[2], 1;
+  HCTVec hctv_imu = htm_ci_ * hctv_cam;//将相机坐标系下的点，通过固定的齐次变换矩阵转换到IMU坐标系下。
+  ctv_imu << hctv_imu[0], hctv_imu[1], hctv_imu[2];
+  ctv_imu += ctv_iw_;//添加IMU本身在世界坐标系中有的固定平移偏移。
+  return rm_imu * ctv_imu;//乘上IMU的实时姿态旋转矩阵。这使点从IMU坐标系旋转到世界坐标系，实现了动态姿态的转换。
+}
+CTVec Solver::WorldToCam(CTVec REF_IN ctv_world, RMat REF_IN rm_imu) const {
+  HCTVec hctv_imu;
+  CTVec ctv_imu = rm_imu.transpose() * ctv_world;
+  ctv_imu -= ctv_iw_;
+  hctv_imu << ctv_imu[0], ctv_imu[1], ctv_imu[2], 1;
+  HCTVec hctv_cam = htm_ic_ * hctv_imu;
+  return {hctv_cam[0], hctv_cam[1], hctv_cam[2]};
+}
+```
+
+### 枪口坐标系 $\leftrightarrow$ 世界坐标系转换
+#### 功能
++ **MuzzleToWorld**: 将枪口坐标系坐标转换为世界坐标系坐标
++ **WorldToMuzzle**: 将世界坐标系坐标转换为枪口坐标系坐标
+
+```cpp
+CTVec Solver::MuzzleToWorld(CTVec REF_IN ctv_muzzle, RMat REF_IN rm_imu) const {
+  HCTVec hctv_muzzle;
+  CTVec ctv_imu;
+  hctv_muzzle << ctv_muzzle[0], ctv_muzzle[1], ctv_muzzle[2], 1;
+  HCTVec hctv_imu = htm_mi_ * hctv_muzzle;
+  ctv_imu << hctv_imu[0], hctv_imu[1], hctv_imu[2];
+  ctv_imu += ctv_iw_;
+  return rm_imu * ctv_imu;
+}
+
+CTVec Solver::WorldToMuzzle(CTVec REF_IN ctv_world, RMat REF_IN rm_imu) const {
+  HCTVec hctv_imu;
+  CTVec ctv_imu = rm_imu.transpose() * ctv_world;
+  ctv_imu -= ctv_iw_;
+  hctv_imu << ctv_imu[0], ctv_imu[1], ctv_imu[2], 1;
+  HCTVec hctv_muzzle = htm_im_ * hctv_imu;
+  return {hctv_muzzle[0], hctv_muzzle[1], hctv_muzzle[2]};
+}
+```
+
+### 相机坐标系下的三维点到二维图像像素坐标的投影
+## 功能
++ **CamToPic**: 将相机坐标系下的三维点ctv_cam投影到二维图像平面上的像素坐标cv::Point2f
+
+```cpp
+cv::Point2f Solver::CamToPic(CTVec REF_IN ctv_cam) const {
+  CTVec result = (1.f / ctv_cam.z()) * intrinsic_mat_eigen_ * ctv_cam;//将相机坐标与内参矩阵相乘。这一步将点从相机坐标系转换到图像像素尺度,并除以z轴分量，将点从三维空间压扁到二维图像平面
+  return {static_cast<float>(result.x()), static_cast<float>(result.y())};
+}
+```
 此模块的代码中使用了多个现代 C++ 特性，它们提高了代码的清晰度、安全性和效率。
 
 1. 命名空间 (namespace)
