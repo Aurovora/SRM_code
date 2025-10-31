@@ -19,13 +19,21 @@ coord模块主要用于坐标系之间的转换和管理。它定义了多种常
 绕X轴旋转矩阵 $\mathbf{R}_x$ (Pitch)：
 
 $$
-\mathbf{R}_x(\theta) = \begin{pmatrix} 1 & 0 & 0 \\ 0 & \cos\theta & -\sin\theta \\ 0 & \sin\theta & \cos\theta \end{pmatrix}
+\mathbf{R}_x(\theta) = \begin{pmatrix} 
+1 & 0 & 0 \\
+0 & \cos\theta & -\sin\theta \\ 
+0 & \sin\theta & \cos\theta 
+\end{pmatrix}
 $$
 
 绕 $Y$ 轴旋转矩阵 $\mathbf{R}_y$ (Yaw)：
 
 $$
-\mathbf{R}_y(\phi) = \begin{pmatrix} \cos\phi & 0 & \sin\phi \\ 0 & 1 & 0 \\ -\sin\phi & 0 & \cos\phi \end{pmatrix}
+\mathbf{R}_y(\phi) = \begin{pmatrix} 
+                    \cos\phi & 0 & \sin\phi \\
+                    0 & 1 & 0 \\ 
+                    -\sin\phi & 0 & \cos\phi 
+                    \end{pmatrix}
 $$
 
 绕 $Z$ 轴旋转矩阵 $\mathbf{R}_z$ (Roll)：
@@ -56,23 +64,23 @@ RMat EAngleToRMat(EAngle REF_IN ea) {
 
 ### 直角坐标 $\leftrightarrow$ 球坐标
 #### 功能：
-+ **STVecToCTVec**:球坐标(phi, theta, r)右偏角，上仰角，转换到直角坐标(x,y,z)
++ **STVecToCTVec**: 球坐标(phi, theta, r)右偏角，上仰角，转换到直角坐标(x,y,z)
 
-+ **CTVecToSTVec**:直角坐标转换到球坐标
++ **CTVecToSTVec**: 直角坐标转换到球坐标
 
-$x$ (右移)：$r \cdot \cos(E) \cdot \sin(A)$
+$x$ (右移)：$r\cdot\cos(E)\cdot\sin(A)$
 
 $$
 \text{距离} \times \cos(\text{仰角}) \times \sin(\text{偏角})
 $$
 
-$y$ (下移)：$-r \cdot \sin(E)$
+$y$ (下移)：$-r\cdot\sin(E)$
 
 $$
 \text{距离} \times (-\sin(\text{仰角}))
 $$
 
-$z$ (前移)：$r \cdot \cos(E) \cdot \cos(A)$
+$z$ (前移)：$r\cdot\cos(E)\cdot\cos(A)$
 
 $$
 \text{距离} \times \cos(\text{仰角}) \times \cos(\text{偏角})
@@ -117,7 +125,7 @@ RVec RMatToRVec(RMat REF_IN rm) {
   return rv;
 }
 ```
-
+- - -
 2.solver
 
 
