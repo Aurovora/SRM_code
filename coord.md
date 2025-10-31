@@ -71,11 +71,11 @@ RMat EAngleToRMat(EAngle REF_IN ea) {
 
 + **CTVecToSTVec**: 直角坐标转换到球坐标
 
-$x$=$\text{距离} \times \cos(\text{仰角}) \times \sin(\text{偏角})$
+ $x$ = $r\times\cos(theta) \times \sin(phi)$
 
-$y$=$\text{距离} \times (-\sin(\text{仰角}))$
+ $y$ = $r \times(-\sin(theta))$
 
-$z$=$\text{距离} \times \cos(\text{仰角}) \times \cos(\text{偏角})$
+ $z$ = $r \times\cos(theta) \times \cos(phi)$
 
 #### 代码：
 ```cpp
@@ -93,9 +93,9 @@ STVec CTVecToSTVec(CTVec REF_IN ctv) {
 
 #### 功能：(借助opencv的Rodrigues函数，因此在计算过程中需要进行格式转换)
 
-+ **RMatToRVec：**将3×1的旋转向量rv转换为3×3的旋转矩阵rm。
++ **RMatToRVec**：将3×1的旋转向量rv转换为3×3的旋转矩阵rm。
 
-+ **RVecToRMat：**将一个3×3的旋转矩阵rm转换为一个3×1的旋转向量。
++ **RVecToRMat**：将一个3×3的旋转矩阵rm转换为一个3×1的旋转向量。
 
 #### 代码：
 ```cpp
