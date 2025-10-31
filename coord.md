@@ -71,11 +71,11 @@ RMat EAngleToRMat(EAngle REF_IN ea) {
 
 + **CTVecToSTVec**: 直角坐标转换到球坐标
 
- $x$ = $r\times\cos(theta) \times \sin(phi)$
+$$x = r\times\cos(theta) \times \sin(phi)$$
 
- $y$ = $r \times(-\sin(theta))$
+$$y$ = $r \times(-\sin(theta))$$
 
- $z$ = $r \times\cos(theta) \times \cos(phi)$
+$$z$ = $r \times\cos(theta) \times \cos(phi)$$
 
 #### 代码：
 ```cpp
