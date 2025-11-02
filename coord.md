@@ -91,11 +91,11 @@ STVec CTVecToSTVec(CTVec REF_IN ctv) {
 
 ### 旋转向量 $\leftrightarrow$ 旋转矩阵
 
-#### 功能：(借助opencv的Rodrigues函数，因此在计算过程中需要进行格式转换)
+#### 功能：(借助opencv的Rodrigues函数（用于实现两种旋转表示方法之间的相互转换），因此在计算过程中需要进行格式转换)
 
-+ **RMatToRVec**：将3×1的旋转向量rv转换为3×3的旋转矩阵rm。
++ **RVecToRMat**：将3×1的旋转向量rv转换为3×3的旋转矩阵rm。
 
-+ **RVecToRMat**：将一个3×3的旋转矩阵rm转换为一个3×1的旋转向量。
++ **RMatToRVec**：将一个3×3的旋转矩阵rm转换为一个3×1的旋转向量。
 
 #### 代码：
 ```cpp
