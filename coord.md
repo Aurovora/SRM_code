@@ -118,15 +118,50 @@ RVec RMatToRVec(RMat REF_IN rm) {
 ```
 - - -
 ## solver
-
+    CTVec ctv_iw_;  ///< 陀螺仪相对世界坐标系原点的位移
+    CTVec ctv_ci_;  ///< 相机相对陀螺仪的位移
+    CTVec ctv_mi_;  ///< 枪口相对陀螺仪的位移
+    CTVec ctv_cw_;  ///< 相机相对世界坐标系原点的位移
+    CTVec ctv_mw_;  ///< 枪口相对世界坐标系原点的位移
+    CTVec ctv_mc_;  ///< 枪口相对相机的位移
+    RMat rm_ci_;    ///< 相机相对陀螺仪的旋转矩阵
+    RMat rm_mi_;    ///< 枪口相对陀螺仪的旋转矩阵
+    HTMat htm_ic_;  ///< 陀螺仪坐标系转换到相机坐标系
+    HTMat htm_ci_;  ///< 相机坐标系转换到陀螺仪坐标系
+    HTMat htm_im_;  ///< 陀螺仪坐标系转换到枪口坐标系
+    HTMat htm_mi_;  ///< 枪口坐标系转换到陀螺仪坐标系
 ### 初始化与配置
 #### 功能：
-+ **Initialize**： 从config配置中读取所有坐标系（IMU、相机、枪口）相对于世界系或IMU的固定位姿（平移ctv和旋转ea），并将角度转换为弧度、平移量转换为米。(IMU是一种传感器模块，用于测量物体在空间中的姿态、角速度和加速度。)
++ **Initialize**： 初始化
+1. 从config配置中读取所有位移向量
+```cpp
+auto prefix = "coord." + cfg.Get<std::string>({"type"});
+  const auto ctv_iw_std = cfg.Get<std::vector<double>>({prefix, "ctv_imu_world"});
+  const auto ctv_ci_std = cfg.Get<std::vector<double>>({prefix, "ctv_cam_imu"});
+  const auto ctv_mi_std = cfg.Get<std::vector<double>>({prefix, "ctv_muzzle_imu"});
+  const auto ea_ci_std = cfg.Get<std::vector<double>>({prefix, "ea_cam_imu"});
+  const auto ea_mi_std = cfg.Get<std::vector<double>>({prefix, "ea_muzzle_imu"});
+```
+2. 将角度转换为弧度、平移量转换为米。
+
+3. 齐次变换矩阵预计算(解决三维空间中旋转和平移操作不能统一表示的问题)
+```cpp
+//构造相机坐标系到 IMU 坐标系的齐次变换矩阵
+  htm_ci_ << rm_ci_(0, 0), rm_ci_(0, 1), rm_ci_(0, 2), ctv_ci_.x(), rm_ci_(1, 0), rm_ci_(1, 1), rm_ci_(1, 2),
+  ctv_ci_.y(), rm_ci_(2, 0), rm_ci_(2, 1), rm_ci_(2, 2), ctv_ci_.z(), 0, 0, 0, 1;
+//构造枪口坐标系到 IMU 坐标系的齐次变换矩阵
+  htm_mi_ << rm_mi_(0, 0), rm_mi_(0, 1), rm_mi_(0, 2), ctv_mi_.x(), rm_mi_(1, 0), rm_mi_(1, 1), rm_mi_(1, 2),
+      ctv_mi_.y(), rm_mi_(2, 0), rm_mi_(2, 1), rm_mi_(2, 2), ctv_mi_.z(), 0, 0, 0, 1;
+//初始化相机内参（从 OpenCV 格式转换为 Eigen 格式）
+  cv2eigen(intrinsic_mat_, intrinsic_mat_eigen_);
+  htm_ic_ = htm_ci_.inverse();
+  htm_im_ = htm_mi_.inverse();
+```
 
 ### Camera $\leftrightarrow$ World
 #### 功能(涵盖了相机坐标、IMU系、世界系的互转)
     * 世界坐标系：原点为陀螺仪中心，自身无旋转，方向为陀螺仪置零的方向
-    * 陀螺仪IMU坐标系：原点为陀螺仪中心，自身可旋转
+    * 陀螺仪IMU坐标系：原点为陀螺仪中心，方向随云台/机器人姿态实时变化
     * 相机坐标系：原点为相机光心，自身可旋转，与世界坐标系原点位置关系固定
     * 枪口坐标系：原点为子弹获得初速的位置，自身可旋转，与世界坐标系原点位置关系固定
 + **CamToWorld**：将相机坐标系坐标转换为世界坐标系坐标。（需借助IMU坐标）

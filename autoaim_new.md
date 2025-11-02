@@ -3,7 +3,7 @@
 ```cpp
 //目标识别与筛选 //pnp解算 略
 if (success) {
-    // 将 PnP解算得到的平移向量tvec（相机坐标系）转换为CTVec类型
+    // 将 PnP解算得到的平移向量tvec存入CTVec类型
     coord::CTVec ctv_target;
     ctv_target << tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2);
     //转换到球坐标系
