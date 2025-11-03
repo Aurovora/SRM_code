@@ -9,8 +9,7 @@ graph TD
     B --> C["dynamic_cloud：点云转世界坐标系，KdTree离群点检测等预处理，输出 livox/lidar_dynamic"]
     C --> D["cluster：对动态点云做欧几里得聚类，通过 livox/cluster 发布"]
     D --> E["GICP 配准"]
-    E --> I[]
-
+    E --> I
     E["相机驱动：采集相机图像，发布 camera_image"]--> F["Calib：把图像检测坐标转换到世界/场地坐标系，保存 config/out_matrix.yaml"]
     F --> G["Detect：图像上做装甲&机器人&数字识别。检测结果发布为 detect_result（自定义消息）。"]
     G --> H["Resolve：把相机检测的像素坐标与外参、透视变换等结合，解算出目标在世界坐标系的位置,并发布 resolve_result"]
