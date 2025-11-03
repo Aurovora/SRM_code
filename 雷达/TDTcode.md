@@ -1,6 +1,25 @@
 # TDT雷达模块理解
 ## what & why
-雷达模块是雷达站上运行的算法系统，拥有固定的、较高的视角，可为战队提供全图的透视效果，获取实时、可靠的敌方机器人位置、身份和运动轨迹信息，从而辅助战术决策和精准打击 。
+雷达模块是雷达站上运行的算法系统，拥有固定的、较高的视角，可为战队提供全图的透视效果，获取实时、可靠的敌方机器人位置、身份和运动轨迹信息，从而辅助战术决策和精准打击。
+在ROS2中，各个模块的通信方式？
+## 架构图（四个部分，两条线）
+```mermaid
+graph TD
+    A["Livox驱动：采集点云"] --> B["Localization：加载预采集地图，GICP配准"]
+    B --> C["dynamic_cloud：点云转世界坐标系，KdTree离群点检测等预处理，输出 livox/lidar_dynamic"]
+    C --> D["cluster：对动态点云做欧几里得聚类，通过 livox/cluster 发布"]
+    D --> E["GICP 配准"]
+    E --> I[]
+
+    E["相机驱动：采集相机图像，发布 camera_image"]--> F["Calib：把图像检测坐标转换到世界/场地坐标系，保存 config/out_matrix.yaml"]
+    F --> G["Detect：图像上做装甲&机器人&数字识别。检测结果发布为 detect_result（自定义消息）。"]
+    G --> H["Resolve：把相机检测的像素坐标与外参、透视变换等结合，解算出目标在世界坐标系的位置,并发布 resolve_result"]
+    H --> I["Kalman_filter：对雷达和相机的结果与卡尔曼轨迹做匹配，校正补充轨迹"]
+    I --> J["debug_map：把点云、聚类、卡尔曼轨迹、相机识别结果做可视化"]
+    I --> K["usart:把融合后的最终目标信息、比赛信息和预警（飞镖/飞机预警）通过串口协议打包下发给主控 / 云台 / 装甲系统。"]
+```
+
+  Match[比赛信息\n(match_info)] --> USART
 ## 实战流程
 ### lidar：实现了将动态点云转换为质心目标的聚类过程
 #### 名词理解
@@ -81,15 +100,26 @@ DynamicCloud节点的主要是接收原始LiDAR数据，通过坐标变换、过
     7. 回调函数执行完毕，节点返回等待状态，继续监听下一个输入数据包。
 
 ### TDT_vision
+tdt_vision 模块是一个多组件的 ROS 2 视觉感知系统，旨在从单目相机图像中实时提取、定位和跟踪场地内的机器人目标，并输出稳定的 3D 状态信息。
+#### 大致流程
 ```mermaid
-graph LR
-    subgraph Vision Pipeline (tdt_vision)
-        A[Image Input: /camera/image_raw] -- ROS Image Msg --> B(Detector: YOLO/CNN)
-        B -- 2D Box + Class + Keypoints --> C(Transformer: Projection Localization)
-        C -- 3D World Coords + 2D Info --> D(Matcher: Data Association)
-        D -- Matched ID + New Target --> E(Tracker: Kalman Filter/State Estimator)
-        E -- Stable 3D Pose + Velocity + Unique ID --> F[Vision Output: /vision/tracked_targets]
-    end
+graph TD
+    A["Calib：相机外参用于把图像检测坐标转换到世界/场地坐标系，保存config/out_matrix.yaml"] --> B["图像上做机器人&装甲板&数字识别（三个模型）。检测结果发布为detect_result"]
+    B --> C["把相机检测的像素坐标与外参、透视变换等结合，解算出目标在世界坐标系的位置（并发布resolve_result）"]
+```
+#### detect
+精确识别出场上所有机器人的装甲板中心点、颜色和数字编号。
 
-    E --> G(Matcher: Feedback Tracking Status)
-    ```
+    1. 节点通过ROS2订阅camera_image话题，获取原始的相机图像数据（并转换成cv::Mat格式）。
+    2. 使用yolo模型粗略识别车辆，筛选过后对图片做一些处理（裁剪）并储存在car_imgs列表
+    3. 使用armor_yolo模型对所有车辆小图进行批量推理，精确识别车辆内部的装甲板。将检测到的坐标储存
+    4. 遍历所有已检测到装甲板的车辆。根据装甲板的坐标，计算出每个装甲板在原始全图上的精确矩形框。（并裁剪，转换格式classify::Image）
+    5. 调用classifier模型对所有装甲板小图进行批量推理
+    6. 按照顺序，将分类结果（class_label）从批量结果中取出，并赋值给对应的装甲板结构体。
+    7. 筛选最佳目标，遍历每辆车上的所有装甲板，找到max_confidence，且class_label != 0的最佳装甲板。
+    8. 确定最佳装甲板的颜色（0/2）；计算中心坐标
+    9. 将装甲板的中心坐标、颜色和数字信息写入 ROS 消息vision_interface::msg::DetectResult 中。（数据是按照 blue_x[N] 和 red_x[N] 的格式存储的，其中 N 是数字编号减一。）
+    10. 通过 pub->publish(detect_result) 将结构化的检测结果发布出去。
+
+#### resolve
+实现RoboMaster雷达站软件架构中的核心定位和可视化功能。
