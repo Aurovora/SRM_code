@@ -2,7 +2,6 @@
 ## what & why
 雷达模块是雷达站上运行的算法系统，拥有固定的、较高的视角，可为战队提供全图的透视效果，获取实时、可靠的敌方机器人位置、身份和运动轨迹信息，从而辅助战术决策和精准打击 。
 ## 实战流程
-由3个步骤组成：上游DynamicCloud；中游lidar；下游
 ### lidar：实现了将动态点云转换为质心目标的聚类过程
 #### 名词理解
 + 点云：它由激光雷达（LiDAR）传感器发射激光束，测量激光触及物体后返回的时间和角度，从而计算出每个点的三维坐标 $(x, y, z)$。每个点都代表传感器视野范围内物体表面的一个采样点。
@@ -15,7 +14,7 @@
 ```mermaid
 graph TD
     A["加载预先制作的场地静态地图"] --> B["从 config/RM2024.pcd 文件加载预先采集的静态地图点云。建 TF 广播器用于发布定位结果。"]
-    B --> C["设置一个定时器(10s)，定期发布静态地图点云到 /livox/map 话题，用于 RViz 可视化。"]
+    B --> C["设置一个定时器(10s)，定期发布静态地图点云到 /livox/map 话题"]
     C --> D["has_aligned_(false 执行下一步，否则直接跳最后一步)"]
     D --> E["GICP 配准"]
     E --> L["TF 广播器使用最新的（或已成功收敛的）变换矩阵，将 LiDAR 坐标系到世界坐标系的变换关系发布出去。"]
@@ -38,6 +37,17 @@ graph TD
 ```
 这个/livox/lidar_cluster话题上的质心数据，就代表了雷达站LiDAR模块最终输出的实时机器人3D坐标，可以供上层决策和跟踪系统使用。
 
+#### localization
++ 初始化与配置
+模块启动时执行一次，用于准备地图和 ROS 接口。
+
+    1. 读取 config/RM2024.pcd 文件，将其加载到内存中的 静态地图点云 (target_cloud_)。这是配准的目标（Target）
+    2. 创建订阅器，接收来自 /livox/lidar 话题的原始点云数据。每当有新数据到达，就会触发 callback 函数。
+    3. 创建两个发布器，用于发布地图 (/livox/map) 和过滤后的点云 (/filter_map)。
+    4. 设置一个定时器（每 10 秒），定期将 target_cloud_ 发布到 /livox/map 话题。这主要用于 RViz 可视化，让操作员能看到地图的位置。
+    5. 初始化 tf2_ros::TransformBroadcaster (tf_broadcaster_)，用于将最终的定位结果（变换矩阵）以 TF 坐标系变换的形式广播出去。
+
+
 #### dynamic_cloud
 + 初始化与预处理
 DynamicCloud节点的主要是接收原始LiDAR数据，通过坐标变换、过滤静态障碍物和进行背景减除，最终输出干净、累积的动态目标点云。
@@ -57,7 +67,7 @@ DynamicCloud节点的主要是接收原始LiDAR数据，通过坐标变换、过
     3. 创建订阅/livox/lidar_dynamic话题的接口，该话题接收上游DynamicCloud节点发布的动态点云
     4. 将Cluster::callback函数与该订阅通道绑定，准备接收数据
     5. 创建发布 /livox/lidar_cluster 话题的接口，准备向下游Fusion Module节点发布质心点云
-    6. 节点进入 ROS 2 事件循环，处于休眠状态，等待 /livox/lidar_dynamic 话题上的数据。
+    6. 节点进入 ROS2 事件循环，处于休眠状态，等待 /livox/lidar_dynamic 话题上的数据。
 
 + Cluster::callback 运行与数据处理
 此阶段在每次收到新数据时自动触发。
@@ -69,3 +79,17 @@ DynamicCloud节点的主要是接收原始LiDAR数据，通过坐标变换、过
     5. 将质心点云消息发布到/livox/lidar_cluster话题。
     6. 等待 /livox/lidar_dynamic 话题上的数据。
     7. 回调函数执行完毕，节点返回等待状态，继续监听下一个输入数据包。
+
+### TDT_vision
+```mermaid
+graph LR
+    subgraph Vision Pipeline (tdt_vision)
+        A[Image Input: /camera/image_raw] -- ROS Image Msg --> B(Detector: YOLO/CNN)
+        B -- 2D Box + Class + Keypoints --> C(Transformer: Projection Localization)
+        C -- 3D World Coords + 2D Info --> D(Matcher: Data Association)
+        D -- Matched ID + New Target --> E(Tracker: Kalman Filter/State Estimator)
+        E -- Stable 3D Pose + Velocity + Unique ID --> F[Vision Output: /vision/tracked_targets]
+    end
+
+    E --> G(Matcher: Feedback Tracking Status)
+    ```
