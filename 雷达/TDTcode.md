@@ -8,29 +8,12 @@
 + 质心：提取质心是将复杂的点云数据简化和抽象，用一个单一的、稳定的点来代表目标的位置。（也方便后续的滤波）
 ~~看到这我其实有个问题：点云中应该包含了很多物体，如何区分不同物体，并分别提取出质心？由此引入了聚类↓~~
 + 聚类：将属于同一个物理物体的点云划分到一个数据组中。TDT采用的是欧几里得聚类（适用于形状规则且分离度高（有明显间距）的目标定位。且在赛场上物体数量动态变化，因此不适用需要预设目标数量的算法。
-`Cluster::Cluster()`
+#### Cluster::Cluster()节点配置
 ```mermaid
 graph TD
-    A[Start: ROS 2 启动 Cluster 节点] --> B{Cluster::Cluster() 构造函数被调用};
-
-    subgraph 初始化与配置 (仅执行一次)
-        B --> C[设置节点身份: Node("cluster_node")];
-        C --> D[日志记录: RCLCPP_INFO("cluster_node start")];
-        D --> E{创建订阅者 (Subscriber)};
-        E --> F[话题: /livox/lidar_dynamic];
-        F --> G[消息类型: sensor_msgs::msg::PointCloud2];
-        G --> H[绑定回调函数: Cluster::callback];
-        H --> I{创建发布者 (Publisher)};
-        I --> J[话题: /livox/lidar_cluster];
-        J --> K[消息类型: sensor_msgs::msg::PointCloud2];
-    end
-
-    K --> L[Finish: 节点初始化完成];
-    L --> M[等待数据: 节点进入 ROS 2 事件循环];
-
-    subgraph 持续运行 (事件驱动)
-        M --> N(数据到达: /livox/lidar_dynamic 收到新消息);
-        N --> O[自动触发: Cluster::callback 函数被执行];
-        O --> P[执行聚类和质心计算];
-        P --> Q[发布结果: /livox/lidar_cluster];
+    A[调用构造函数，节点启动] --> B[向ROS2系统注册，设置名称]
+    B --> C[创建订阅/livox/lidar_dynamic话题的接口，该话题接收上游DynamicCloud节点发布的动态点云]
+    C --> D[将Cluster::callback函数与该订阅通道绑定，准备接收数据.]
+    D --> E[创建发布 /livox/lidar_cluster 话题的接口，准备向下游Fusion Module节点发布质心点云]
+    E --> F[等待 /livox/lidar_dynamic 话题上的数据。]
 ```
