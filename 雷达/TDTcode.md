@@ -18,7 +18,7 @@ graph TD
     B --> C[设置一个定时器(10s)，定期发布静态地图点云到/livox/map话题，用于RViz可视化。]
     C --> D[has_aligned_ （false没有初始化就执行下一步，true就跳到最后一步）]
     D --> E[GICP配准]
-    E --> L[TF广播器使用最新的（或已成功收敛的）变换矩阵，将LiDAR坐标系到世界坐标系的变换关系发布出去。]
+    E --> F[TF广播器使用最新的（或已成功收敛的）变换矩阵，将LiDAR坐标系到世界坐标系的变换关系发布出去。]
 ```
 `DynamicCloud`
 ```mermaid
