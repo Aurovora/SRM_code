@@ -16,10 +16,10 @@
 graph TD
     A[加载预先制作的场地静态地图] --> B[从config/RM2024.pcd文件加载预先采集的静态地图点云。建TF广播器用于发布定位结果。]
     B --> C[设置一个定时器(10s)，定期发布静态地图点云到/livox/map话题，用于RViz可视化。]
-    C --> D{has_aligned_ }
-    D -->|false| E[GICP配准]
-    D -->|True| L[TF广播器使用最新的（或已成功收敛的）变换矩阵，将LiDAR坐标系到世界坐标系的变换关系发布出去。]
-    E --> L
+    C --> D[has_aligned_(false执行下一步，否则直接跳最后一步) ]
+    D --> E[GICP配准]
+    E --> L[TF广播器使用最新的（或已成功收敛的）变换矩阵，将LiDAR坐标系到世界坐标系的变换关系发布出去。]
+
 ```
 `DynamicCloud`
 ```mermaid
