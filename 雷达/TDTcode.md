@@ -61,7 +61,7 @@ graph TD
 这个/livox/lidar_cluster话题上的质心数据，就代表了雷达站LiDAR模块最终输出的实时3D坐标，可以供上层决策和跟踪系统使用。
 
 #### localization
-+ 初始化与配置
+初始化与配置
 模块启动时执行一次，用于准备地图和ROS接口。
 
     1. 读取 config/RM2024.pcd 文件，将其加载到内存中的 静态地图点云 (target_cloud_)。这是配准的目标（Target）
@@ -72,7 +72,7 @@ graph TD
 
 
 #### dynamic_cloud
-+ 初始化与预处理
+初始化与预处理
 DynamicCloud节点的主要是接收原始LiDAR数据，通过坐标变换、过滤静态障碍物和进行背景减除，最终输出干净、累积的动态目标点云。
 
     1. 启动dynamic_cloud_node，初始化TF缓冲区和监听器（处理坐标变换）
@@ -82,7 +82,7 @@ DynamicCloud节点的主要是接收原始LiDAR数据，通过坐标变换、过
     5. 设置ROS接口
 
 #### Cluster
-+ Cluster::Cluster()节点配置
+Cluster::Cluster()节点配置
 此阶段在节点启动时只执行一次，完成ROS2节点的配置。
 
     1. 调用构造函数，节点启动
@@ -92,7 +92,7 @@ DynamicCloud节点的主要是接收原始LiDAR数据，通过坐标变换、过
     5. 创建发布 /livox/lidar_cluster 话题的接口，准备向下游Fusion Module节点发布质心点云
     6. 节点进入 ROS2 事件循环，处于休眠状态，等待 /livox/lidar_dynamic 话题上的数据。
 
-+ Cluster::callback 运行与数据处理
+Cluster::callback 运行与数据处理
 此阶段在每次收到新数据时自动触发。
 
     1. /livox/lidar_dynamic话题收到新的动态点云消息。
