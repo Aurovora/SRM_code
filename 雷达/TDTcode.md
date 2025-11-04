@@ -137,8 +137,8 @@ tdt_vision 模块是一个多组件的 ROS 2 视觉感知系统，旨在从单�
 #### kalman_filter
 通过对雷达点云与相机识别结果进行时间同步与卡尔曼滤波融合，实现平滑、稳定、带身份识别的目标跟踪输出。
 
-    1. 创建ROS2订阅与发布端口。订阅雷达话题 /livox/lidar_cluster，接收动态目标点。订阅相机识别结果 /resolve_result。初始化多目标跟踪容器KFs
+    1. 创建ROS2订阅与发布端口。订阅雷达话题 /livox/lidar_cluster，接收动态目标点。订阅相机识别结果 /resolve_result。初始化多目标跟踪容器KFs，时间同步：使用 message_filters 确保 /livox/lidar_cluster 和 /resolve_result 在时间上对齐。
     2. 接收接收相机检测结果，利用目标的颜色与编号对齐匹配已有卡尔曼轨迹。
     3. 接收雷达点云将 /livox/lidar_cluster 的三维点云转换为二维 pcl::PointXY 点集。对所有卡尔曼滤波器执行update_predict_point()，更新预测轨迹。遍历所有KFs，查找匹配的目标轨迹。无匹配则创建新 Kalman_filter_plus；若单一匹配则更新该轨迹；若多重匹配则选择距离最近的进行更新。
-    4. 生成可视化点云（若己方阵营为蓝方，需要镜像坐标系（28-x, 15-y）消除蓝方和红方雷达站的视角差异）
+    4. 生成可视化点云
     5. 发布融合后的检测结果。
