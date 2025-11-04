@@ -15,10 +15,11 @@ graph TD
     G --> H["Resolve：把相机检测的像素坐标与外参、透视变换等结合，解算出目标在世界坐标系的位置,并发布resolve_result"]
     H --> I["Kalman_filter：结合雷达（实时3D坐标）和相机（目标ID、颜色、标签）的结果，预测目标下一时刻的位置，并修正当前的状态，从而消除传感器带来的瞬间抖动和噪声，输出一个更平稳、更可靠的轨迹。"]
     I --> L[决策层]
-    L --> Z[" "]:::invisible
-    Z --> J["debug_map：可视化点云、聚类、轨迹、相机识别结果"]
-    Z --> K["usart：打包融合信息并下发主控 / 云台 / 装甲系统"]
-    
+
+    J["debug_map：可视化点云、聚类、轨迹、相机识别结果"]
+    K["usart：打包融合信息并下发主控 / 云台 / 装甲系统"]
+    end
+
     classDef invisible fill=none,stroke=none;
 ```
 
