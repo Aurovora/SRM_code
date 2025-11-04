@@ -20,7 +20,6 @@ graph TD
     K["usart：打包融合信息并下发主控 / 云台 / 装甲系统"]
     end
 
-    classDef invisible fill=none,stroke=none;
 ```
 
 ## 实战流程
